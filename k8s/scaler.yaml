@@ -1,0 +1,51 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: podinfo-scaler
+  namespace: sla-demo
+
+spec:
+  scaleTargetRef:
+    name: podinfo
+
+  minReplicaCount: 1
+  maxReplicaCount: 50
+
+  triggers:
+
+  - type: cpu
+    metricType: Utilization
+    metadata:
+      value: "30"
+
+  - type: memory
+    metricType: Utilization
+    metadata:
+      value: "70"
+
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+      metricName: request_rate
+      query: |
+        sum(rate(http_requests_total{service="podinfo"}[1m]))
+      threshold: "100"
+
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+      metricName: latency
+      query: |
+        histogram_quantile(
+          0.95,
+          sum(rate(http_request_duration_seconds_bucket{service="podinfo"}[1m])) by (le)
+        )
+      threshold: "0.5"
+
+  - type: prometheus
+    metadata:
+      serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring:9090
+      metricName: error_rate
+      query: |
+        sum(rate(http_requests_total{service="podinfo",status=~"5.."}[1m]))
+      threshold: "0.1"

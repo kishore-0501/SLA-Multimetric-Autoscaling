@@ -1,0 +1,28 @@
+Project Overview
+Architecture
+Components Used
+Installation Steps
+Demo Instructions
+Results
+Future Work
+
+
+
+Users
+  ↓
+Load Balancer
+  ↓
+Podinfo Application
+  ↓
+KEDA + HPA Autoscaling
+  ↓
+Prometheus Metrics
+  ↓
+Grafana Dashboards
+
+Failure Scenario:
+Application Failure
+  ↓
+SQS Queue
+  ↓
+AWS Lambda Processing
