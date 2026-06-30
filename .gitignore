@@ -1,0 +1,13 @@
+# Python environment
+venv/
+sla-gateway/venv/
+
+# cache
+__pycache__/
+*.pyc
+
+# IDE
+.vscode/
+
+# logs
+*.log

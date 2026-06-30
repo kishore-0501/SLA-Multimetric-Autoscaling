@@ -10,6 +10,6 @@ export let options = {
 };
 
 export default function () {
-  http.get('http://k8s-slademo-slagatew-26fc8a4e00-c4f42871e24f938f.elb.eu-west-1.amazonaws.com/');
+  http.get('http://k8s-slademo-slagatew-5b0d0222b3-354127e2a2ce0175.elb.eu-west-1.amazonaws.com/');
   sleep(1);
 }
