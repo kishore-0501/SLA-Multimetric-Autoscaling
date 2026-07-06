@@ -6,47 +6,122 @@ import time
 
 app = FastAPI()
 
+# ----------------------------
+# Configuration
+# ----------------------------
+
 PODINFO_URL = "http://podinfo.sla-demo.svc.cluster.local:9898"
 
-SQS_QUEUE_URL = "https://sqs.eu-west-1.amazonaws.com/238679625965/sla-fallback-queue"
+PROMETHEUS_URL = (
+    "http://prometheus-kube-prometheus-prometheus.monitoring:9090"
+)
 
-sqs = boto3.client("sqs", region_name="eu-west-1")
+SQS_QUEUE_URL = (
+    "https://sqs.eu-west-1.amazonaws.com/238679625965/sla-fallback-queue"
+)
 
-# SLA threshold (simple and realistic)
-LATENCY_LIMIT = 0.9  # seconds
+REQUEST_RATE_LIMIT = 1500
 
+sqs = boto3.client(
+    "sqs",
+    region_name="eu-west-1"
+)
 
-def send_to_sqs(reason: str):
+# ----------------------------
+# Send to SQS
+# ----------------------------
+
+def send_to_sqs(message):
+
     sqs.send_message(
         QueueUrl=SQS_QUEUE_URL,
-        MessageBody=json.dumps({
-            "reason": reason,
-            "service": "podinfo"
-        })
+        MessageBody=json.dumps(message)
     )
 
+# ----------------------------
+# Read request rate
+# ----------------------------
+
+def get_request_rate():
+
+    query = 'sum(rate(http_requests_total{service="podinfo"}[1m]))'
+
+    try:
+
+        response = requests.get(
+            f"{PROMETHEUS_URL}/api/v1/query",
+            params={"query": query},
+            timeout=2
+        )
+
+        result = response.json()
+
+        value = float(
+            result["data"]["result"][0]["value"][1]
+        )
+
+        return value
+
+    except Exception as e:
+
+        print("Prometheus error:", e)
+
+        return 0
+
+# ----------------------------
+# Gateway
+# ----------------------------
 
 @app.get("/")
 def gateway():
 
-    start = time.time()
+    request_rate = get_request_rate()
+
+    print("Current Request Rate =", request_rate)
+
+    # -------------------------
+    # Serverless Fallback
+    # -------------------------
+
+    if request_rate >= REQUEST_RATE_LIMIT:
+
+        send_to_sqs({
+            "reason": "High Request Rate",
+            "request_rate": request_rate
+        })
+
+        return {
+            "status": "fallback -> SQS",
+            "request_rate": request_rate
+        }
+
+    # -------------------------
+    # Normal Kubernetes Path
+    # -------------------------
 
     try:
-        r = requests.get(PODINFO_URL, timeout=2)
+
+        start = time.time()
+
+        response = requests.get(
+            PODINFO_URL,
+            timeout=2
+        )
+
         latency = time.time() - start
 
-        # ❗ SLA FAILURE CONDITIONS
-        if r.status_code >= 500:
-            send_to_sqs("5xx error from podinfo")
-            return {"status": "fallback -> SQS"}
+        return {
+            "backend": "Kubernetes",
+            "latency": round(latency, 4),
+            "response": response.json()
+        }
 
-        if latency > LATENCY_LIMIT:
-            send_to_sqs("high latency breach")
-            return {"status": "fallback -> SQS"}
+    except Exception:
 
-        # normal flow (THIS triggers HPA naturally)
-        return r.json()
+        send_to_sqs({
+            "reason": "Podinfo Unreachable"
+        })
 
-    except Exception as e:
-        send_to_sqs("timeout or connection failure")
-        return {"status": "fallback -> SQS"}
+        return {
+            "status": "fallback -> SQS"
+        }
