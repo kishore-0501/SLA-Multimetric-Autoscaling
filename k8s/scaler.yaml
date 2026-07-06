@@ -29,7 +29,7 @@ spec:
       metricName: request_rate
       query: |
         sum(rate(http_requests_total{service="podinfo"}[1m]))
-      threshold: "500"
+      threshold: "450"
 
   - type: prometheus
     metadata:

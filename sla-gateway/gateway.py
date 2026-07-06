@@ -20,7 +20,7 @@ SQS_QUEUE_URL = (
     "https://sqs.eu-west-1.amazonaws.com/238679625965/sla-fallback-queue"
 )
 
-REQUEST_RATE_LIMIT = 50
+REQUEST_RATE_LIMIT = 40
 
 sqs = boto3.client(
     "sqs",
