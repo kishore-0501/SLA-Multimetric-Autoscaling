@@ -9,7 +9,7 @@ spec:
     name: podinfo
 
   minReplicaCount: 1
-  maxReplicaCount: 28
+  maxReplicaCount: 20
 
   triggers:
 
