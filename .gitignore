@@ -2,6 +2,15 @@
 venv/
 sla-gateway/venv/
 
+venv/
+**/venv/
+
+.terraform/
+
+terraform.tfstate
+terraform.tfstate.*
+
+
 # cache
 __pycache__/
 *.pyc

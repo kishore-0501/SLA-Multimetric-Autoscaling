@@ -1,0 +1,10 @@
+controller:
+  image:
+    registry: docker.io
+    repository: kishore0501/jenkins-pipeline
+    tag: v1
+
+  imagePullPolicy: Always
+
+persistence:
+  enabled: false

@@ -18,3 +18,10 @@ if current >= 30:
     print("FALLBACK_ENABLED")
 else:
     print("NORMAL_MODE")
+if fallback_enabled:
+    sqs.send_message(
+        QueueUrl=queue_url,
+        MessageBody=request_payload
+    )
+else:
+    requests.get(podinfo_url)

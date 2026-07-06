@@ -1,17 +1,22 @@
 pipeline {
-    agent any
+
+    agent {
+        label 'windows'
+    }
 
     environment {
         IMAGE_NAME = "sla-gateway"
-        REGISTRY = "kishore0501"
-        TAG = "${BUILD_NUMBER}"
+        REGISTRY   = "kishore0501"
+        TAG        = "${BUILD_NUMBER}"
+        DOCKER_CREDS = credentials('dockerhub')
     }
 
     stages {
 
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/kishore-0501/SLA-Multimetric-Autoscaling'
+                git branch: 'main',
+                    url: 'https://github.com/kishore-0501/SLA-Multimetric-Autoscaling'
             }
         }
 
@@ -19,51 +24,97 @@ pipeline {
             steps {
                 script {
 
-                    def changes = sh(script: "git diff --name-only HEAD~1 HEAD", returnStdout: true).trim()
+                    def changes = bat(
+                        script: '@git diff --name-only HEAD~1 HEAD',
+                        returnStdout: true
+                    ).trim()
 
-                    echo "CHANGED FILES:"
+                    echo "Changed files:"
                     echo changes
 
-                    env.BUILD_APP = changes.contains("sla-gateway/")
-                    env.BUILD_K8S = changes.contains("k8s/")
+                    env.BUILD_APP = changes.contains("sla-gateway/") ? "true" : "false"
+                    env.BUILD_K8S = changes.contains("k8s/") ? "true" : "false"
+
+                    echo "BUILD_APP = ${env.BUILD_APP}"
+                    echo "BUILD_K8S = ${env.BUILD_K8S}"
                 }
+            }
+        }
+
+        stage('Docker Login') {
+            when {
+                expression { env.BUILD_APP == "true" }
+            }
+            steps {
+                bat """
+                docker login -u %DOCKER_CREDS_USR% -p %DOCKER_CREDS_PSW%
+                """
             }
         }
 
         stage('Build Docker Image') {
             when {
-                expression { return env.BUILD_APP == "true" }
+                expression { env.BUILD_APP == "true" }
             }
             steps {
-                sh """
-                echo "Building Docker image from gateway.py..."
-                docker build -t ${IMAGE_NAME}:${TAG} sla-gateway/
-                """
+                dir('sla-gateway') {
+                    bat """
+                    docker build -t %REGISTRY%/%IMAGE_NAME%:%TAG% .
+                    """
+                }
             }
         }
 
         stage('Push Docker Image') {
             when {
-                expression { return env.BUILD_APP == "true" }
+                expression { env.BUILD_APP == "true" }
             }
             steps {
-                sh """
-                docker tag ${IMAGE_NAME}:${TAG} ${REGISTRY}/${IMAGE_NAME}:${TAG}
-                docker push ${REGISTRY}/${IMAGE_NAME}:${TAG}
+                bat """
+                docker push %REGISTRY%/%IMAGE_NAME%:%TAG%
                 """
             }
         }
 
-        stage('Deploy Kubernetes') {
+        stage('Deploy Gateway') {
             when {
-                expression { return env.BUILD_APP == "true" || env.BUILD_K8S == "true" }
+                expression { env.BUILD_APP == "true" }
             }
             steps {
-                sh """
-                echo "Deploying to Kubernetes..."
-                kubectl apply -f k8s/
+                bat """
+                kubectl set image deployment/sla-gateway ^
+                sla-gateway=%REGISTRY%/%IMAGE_NAME%:%TAG% ^
+                -n sla-demo
+
+                kubectl rollout status deployment/sla-gateway -n sla-demo
                 """
             }
+        }
+
+        stage('Apply Kubernetes Manifests') {
+            when {
+                expression { env.BUILD_K8S == "true" }
+            }
+            steps {
+                bat """
+                kubectl apply -f k8s
+                """
+            }
+        }
+
+    }
+
+    post {
+        always {
+            bat "docker logout"
+        }
+
+        success {
+            echo "Pipeline completed successfully!"
+        }
+
+        failure {
+            echo "Pipeline failed."
         }
     }
 }
