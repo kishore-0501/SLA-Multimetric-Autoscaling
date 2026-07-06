@@ -13,7 +13,7 @@ SQS_QUEUE_URL = "https://sqs.eu-west-1.amazonaws.com/238679625965/sla-fallback-q
 sqs = boto3.client("sqs", region_name="eu-west-1")
 
 # SLA threshold (simple and realistic)
-LATENCY_LIMIT = 0.10  # seconds
+LATENCY_LIMIT = 0.9  # seconds
 
 
 def send_to_sqs(reason: str):
