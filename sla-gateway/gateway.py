@@ -67,6 +67,12 @@ def get_request_rate():
         print("Prometheus error:", e)
 
         return 0
+    
+request_rate = get_request_rate()
+
+print("========================")
+print("Current Request Rate:", request_rate)
+print("========================")
 
 # ----------------------------
 # Gateway
