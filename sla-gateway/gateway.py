@@ -33,10 +33,14 @@ sqs = boto3.client(
 
 def send_to_sqs(message):
 
-    sqs.send_message(
+    print("******** SENDING TO SQS ********")
+    print(message)
+
+    response = sqs.send_message(
         QueueUrl=SQS_QUEUE_URL,
         MessageBody=json.dumps(message)
     )
+    print(response)
 
 # ----------------------------
 # Read request rate
