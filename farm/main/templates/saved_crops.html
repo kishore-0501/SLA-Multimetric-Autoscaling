@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h2>My Saved Crops</h2>
+
+{% if saved_crops %}
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Type</th>
+        <th>Qty</th>
+        <th>Price</th>
+        <th>Seller</th>
+    </tr>
+    {% for crop in saved_crops %}
+    <tr>
+        <td>{{ crop.crop_name }}</td>
+        <td>{{ crop.crop_type }}</td>
+        <td>{{ crop.quantity }}</td>
+        <td>{{ crop.price_per_unit }}</td>
+        <td>{{ crop.owner.first_name }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% else %}
+<p>You have no saved crops yet.</p>
+{% endif %}
+
+{% endblock %}

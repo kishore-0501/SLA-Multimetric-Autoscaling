@@ -1,0 +1,46 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>About - FarmEase</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <style>
+        body { font-family: 'Poppins', Arial, sans-serif; padding: 20px; color: #333; background-color: #f9f9f9; }
+        h2 { color: #2f855a; margin-top: 30px; }
+        h3 { color: #276749; margin-top: 25px; }
+        p { margin-bottom: 15px; line-height: 1.6; }
+        a { color: #2f855a; text-decoration: none; font-weight: bold; }
+        a:hover { text-decoration: underline; }
+        .container { max-width: 900px; margin: auto; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <a href="{% url 'home' %}">⬅ Back to Home</a>
+
+    <h2>OUR VISION</h2>
+    <p>FarmEase’s vision is to become the largest agricultural fair-trade platform, connecting farmers to buyers across Ireland.</p>
+
+    <h2>OUR MISSION</h2>
+    <p>FarmEase’s mission is to be THE reference for digital agricultural crop trading through a simple, transparent, and secure platform.</p>
+
+    <h2>OUR FOCUS & EXPERIENCE</h2>
+    <p>FarmEase is built by a team of experts in farming, procurement, and digital business. We aim to redistribute value in the agriculture supply chain through reliability, transparency, and agility.</p>
+
+    <h2>KNOW-YOUR-CUSTOMER</h2>
+    <p>KYC is used to verify the identity and origin of funds of users on FarmEase, preventing fraudulent activities and ensuring a trustworthy network of buyers and sellers.</p>
+
+    <h3>KYC FOR SELLERS</h3>
+    <p>Seller accounts are verified with ID, company registration documents, and bank proof to ensure legitimacy.</p>
+
+    <h3>KYC FOR BUYERS</h3>
+    <p>Buyer accounts are verified when withdrawing funds from the platform, ensuring safety and trust.</p>
+
+    <h2>CERTIFIED B CORPORATION</h2>
+    <p>FarmEase is committed to using business as a force for good, balancing purpose and profit while promoting sustainability and social responsibility in agriculture.</p>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,11 @@
+<h2>Buyer Messages</h2>
+
+<ul>
+{% for msg in messages %}
+  <li>
+    <b>{{ msg.sender.username }}</b>: {{ msg.message }}
+  </li>
+{% empty %}
+  <li>No messages yet</li>
+{% endfor %}
+</ul>

@@ -1,0 +1,22 @@
+<h2>All Crops</h2>
+<a href="{% url 'add_crop' %}">Add New Crop</a>
+<table border="1">
+  <tr>
+    <th>Seller</th><th>Name</th><th>Type</th><th>Qty</th><th>Price</th><th>Description</th><th>Actions</th>
+  </tr>
+  {% for crop in crops %}
+  <tr>
+    <td>{{ crop.seller_name }}</td>
+    <td>{{ crop.crop_name }}</td>
+    <td>{{ crop.crop_type }}</td>
+    <td>{{ crop.quantity }}</td>
+    <td>{{ crop.price_per_unit }}</td>
+    <td>{{ crop.description }}</td>
+    <td>
+      <a href="{% url 'edit_crop' crop.id %}">Edit</a> |
+      <a href="{% url 'delete_crop' crop.id %}">Delete</a>
+      <a href="{% url 'chat' crop.owner.id %}">Chat with Seller</a>
+    </td>
+  </tr>
+  {% endfor %}
+</table>

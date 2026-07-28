@@ -1,0 +1,55 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Profile - FarmEase</title>
+  <link rel="stylesheet" href="{% static 'css/style.css' %}">
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f4f6f9; }
+    .container { max-width: 600px; margin: 80px auto; padding: 30px; background: #fff; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    h2 { text-align: center; color: #2e7d32; }
+    form input, form button { width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid #ccc; }
+    button { background-color: #2e7d32; color: #fff; border: none; cursor: pointer; }
+    button:hover { background-color: #1b5e20; }
+    .back { display: block; margin-top: 10px; text-align: center; color: #2e7d32; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>My Profile</h2>
+
+    {% if messages %}
+      <ul style="color: red;">
+        {% for message in messages %}
+          <li>{{ message }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+
+    <form method="POST">
+      {% csrf_token %}
+      <label>First Name</label>
+      <input type="text" name="first_name" value="{{ request.user.first_name }}" required>
+
+      <label>Email</label>
+      <input type="email" name="email" value="{{ request.user.email }}" required>
+
+      <button type="submit">Update Profile</button>
+    </form>
+
+    <a href="{% url 'dashboard' %}" class="back">← Back to Dashboard</a>
+
+    <h3>Your Orders</h3>
+    {% if orders %}
+      <ul>
+        {% for order in orders %}
+          <li>{{ order.crop.crop_name }} - {{ order.quantity }} units ({{ order.total_price }})</li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No orders yet.</p>
+    {% endif %}
+  </div>
+</body>
+</html>

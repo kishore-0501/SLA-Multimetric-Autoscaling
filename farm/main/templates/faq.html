@@ -1,0 +1,31 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FAQ - FarmEase</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <header>
+        <h1>FarmEase - FAQ</h1>
+    </header>
+
+    <nav>
+        <a href="{% url 'home' %}">Home</a>
+        <a href="{% url 'faq' %}">FAQ</a>
+        <a href="{% url 'user_signup' %}">Sign Up</a>
+        <a href="{% url 'user_login' %}">Login</a>
+    </nav>
+
+    <section>
+        <h2>Frequently Asked Questions</h2>
+        <ul>
+            <li><strong>Q:</strong> How do I buy crops? <br><strong>A:</strong> Login as buyer and browse available crops.</li>
+            <li><strong>Q:</strong> How do I sell crops? <br><strong>A:</strong> Login as seller and add your crops.</li>
+            <li><strong>Q:</strong> How can I contact a seller? <br><strong>A:</strong> Use the chat option next to each seller.</li>
+        </ul>
+    </section>
+
+</body>
+</html>
