@@ -99,69 +99,27 @@ pipeline {
 
 
 
-        stage('Build Docker Image') {
+        stage('Build and Push Docker Image') {
 
+    when {
+        expression { env.BUILD_APP == "true" }
+    }
 
-            when {
+    steps {
 
-                expression {
+        dir('sla-gateway') {
 
-                    env.BUILD_APP == "true"
-
-                }
-
-            }
-
-
-            steps {
-
-
-                dir('sla-gateway') {
-
-
-                    sh '''
-
-                    docker build \
-                    -t $ECR_REGISTRY/$IMAGE_NAME:$TAG .
-
-                    '''
-
-                }
-
-            }
+            sh '''
+            docker buildx build \
+              --platform linux/amd64 \
+              -t $ECR_REGISTRY/$IMAGE_NAME:$TAG \
+              --push .
+            '''
 
         }
 
-
-
-
-        stage('Push Image to ECR') {
-
-
-            when {
-
-                expression {
-
-                    env.BUILD_APP == "true"
-
-                }
-
-            }
-
-
-            steps {
-
-
-                sh '''
-
-                docker push \
-                $ECR_REGISTRY/$IMAGE_NAME:$TAG
-
-                '''
-
-            }
-
-        }
+    }
+}
 
 
 
