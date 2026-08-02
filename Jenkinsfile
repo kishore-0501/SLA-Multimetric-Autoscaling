@@ -6,10 +6,15 @@ pipeline {
 
 
     environment {
+
         AWS_REGION = "eu-west-1"
+
         ECR_REGISTRY = "562460196113.dkr.ecr.eu-west-1.amazonaws.com"
+
         IMAGE_NAME = "gateway"
+
         TAG = "${BUILD_NUMBER}"
+
     }
 
 
@@ -17,14 +22,20 @@ pipeline {
 
 
         stage('Checkout') {
+
             steps {
+
                 checkout scm
+
             }
+
         }
 
 
         stage('Check Buildx') {
+
             steps {
+
                 sh '''
                 echo "Current user:"
                 whoami
@@ -32,47 +43,6 @@ pipeline {
                 echo "Docker Buildx:"
                 docker buildx ls
                 '''
-            }
-        }
-
-
-        stage('Detect Changes') {
-            steps {
-
-                script {
-
-                    def changes = sh(
-                        script: "git diff --name-only HEAD~1 HEAD || true",
-                        returnStdout: true
-                    ).trim()
-
-                    echo "Changed files:"
-                    echo changes
-
-                    env.BUILD_APP =
-                    changes.contains("sla-gateway/") ? "true" : "false"
-
-                    env.BUILD_K8S =
-                    changes.contains("k8s/") ? "true" : "false"
-
-                }
-            }
-        }
-
-
-        // your remaining stages here
-
-    }
-}
-
-    stages {
-
-
-        stage('Checkout') {
-
-            steps {
-
-                checkout scm
 
             }
 
@@ -113,15 +83,12 @@ pipeline {
         }
 
 
-
         stage('Login to ECR') {
 
             when {
 
                 expression {
-
                     env.BUILD_APP == "true"
-
                 }
 
             }
@@ -145,29 +112,38 @@ pipeline {
 
 
 
-
         stage('Build and Push Docker Image') {
 
-    when {
-        expression { env.BUILD_APP == "true" }
-    }
 
-    steps {
+            when {
 
-        dir('sla-gateway') {
+                expression {
+                    env.BUILD_APP == "true"
+                }
 
-            sh '''
-            docker buildx build \
-              --platform linux/amd64 \
-              -t $ECR_REGISTRY/$IMAGE_NAME:$TAG \
-              --push .
-            '''
+            }
+
+
+            steps {
+
+
+                dir('sla-gateway') {
+
+
+                    sh '''
+
+                    docker buildx build \
+                    --platform linux/amd64 \
+                    -t $ECR_REGISTRY/$IMAGE_NAME:$TAG \
+                    --push .
+
+                    '''
+
+                }
+
+            }
 
         }
-
-    }
-}
-
 
 
 
@@ -177,9 +153,7 @@ pipeline {
             when {
 
                 expression {
-
                     env.BUILD_APP == "true"
-
                 }
 
             }
@@ -207,23 +181,19 @@ pipeline {
 
 
 
-
         stage('Apply Kubernetes Manifests') {
 
 
             when {
 
                 expression {
-
                     env.BUILD_K8S == "true"
-
                 }
 
             }
 
 
             steps {
-
 
                 sh '''
 
@@ -235,7 +205,6 @@ pipeline {
 
         }
 
-        
 
 
         stage('Verify Deployment') {
