@@ -3,10 +3,16 @@ kind: Service
 metadata:
   name: sla-gateway
   namespace: sla-demo
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: internet-facing
+
 spec:
   type: LoadBalancer
+
   selector:
     app: sla-gateway
+
   ports:
   - port: 80
     targetPort: 8000

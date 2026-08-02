@@ -54,3 +54,4 @@ urllib3==1.26.20
 wcwidth==0.2.14
 wrapt==2.0.1
 zipp==3.23.0
+django-prometheus==2.3.1

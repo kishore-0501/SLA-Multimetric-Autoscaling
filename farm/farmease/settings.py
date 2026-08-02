@@ -16,12 +16,9 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = [
-    'farmease-env.eba-i4ddempf.us-east-1.elasticbeanstalk.com',
-    '2fa585ea017c4fb39d37df0427b9400d.vfs.cloud9.us-east-1.amazonaws.com',
-    'localhost',
-    '127.0.0.1'
-]  # Allow all for now (Elastic Beanstalk will assign a domain)
+ALLOWED_HOSTS = ["*"]
+
+
 CSRF_TRUSTED_ORIGINS = [
     'https://*.elasticbeanstalk.com',
     'http://farmease-env.eba-i4ddempf.us-east-1.elasticbeanstalk.com',
@@ -32,6 +29,7 @@ CSRF_TRUSTED_ORIGINS = [
 # Installed Apps
 # -----------------------------------------
 INSTALLED_APPS = [
+    'django_prometheus',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -45,6 +43,7 @@ INSTALLED_APPS = [
 # Middleware
 # -----------------------------------------
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -52,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'farmease.urls'

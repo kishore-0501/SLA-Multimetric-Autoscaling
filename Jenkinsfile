@@ -1,120 +1,294 @@
 pipeline {
 
     agent {
-        label 'windows'
+        label 'mac-agent'
     }
 
+
     environment {
-        IMAGE_NAME = "sla-gateway"
-        REGISTRY   = "kishore0501"
-        TAG        = "${BUILD_NUMBER}"
-        DOCKER_CREDS = credentials('dockerhub')
+
+        AWS_REGION = "eu-west-1"
+
+        ECR_REGISTRY = "562460196113.dkr.ecr.eu-west-1.amazonaws.com"
+
+        IMAGE_NAME = "gateway"
+
+        TAG = "${BUILD_NUMBER}"
+
     }
+
 
     stages {
 
+
         stage('Checkout') {
+
             steps {
+
                 git branch: 'main',
                     url: 'https://github.com/kishore-0501/SLA-Multimetric-Autoscaling'
+
             }
+
         }
 
+
         stage('Detect Changes') {
+
             steps {
+
                 script {
 
-                    def changes = bat(
-                        script: '@git diff --name-only HEAD~1 HEAD',
+                    def changes = sh(
+                        script: "git diff --name-only HEAD~1 HEAD || true",
                         returnStdout: true
                     ).trim()
+
 
                     echo "Changed files:"
                     echo changes
 
-                    env.BUILD_APP = changes.contains("sla-gateway/") ? "true" : "false"
-                    env.BUILD_K8S = changes.contains("k8s/") ? "true" : "false"
+
+                    env.BUILD_APP =
+                    changes.contains("sla-gateway/") ? "true" : "false"
+
+
+                    env.BUILD_K8S =
+                    changes.contains("k8s/") ? "true" : "false"
+
 
                     echo "BUILD_APP = ${env.BUILD_APP}"
                     echo "BUILD_K8S = ${env.BUILD_K8S}"
+
                 }
+
             }
+
         }
 
-        stage('Docker Login') {
+
+
+        stage('Login to ECR') {
+
             when {
-                expression { env.BUILD_APP == "true" }
+
+                expression {
+
+                    env.BUILD_APP == "true"
+
+                }
+
             }
+
+
             steps {
-                bat """
-                docker login -u %DOCKER_CREDS_USR% -p %DOCKER_CREDS_PSW%
-                """
+
+                sh '''
+
+                aws ecr get-login-password \
+                --region $AWS_REGION | \
+                docker login \
+                --username AWS \
+                --password-stdin $ECR_REGISTRY
+
+                '''
+
             }
+
         }
+
+
 
         stage('Build Docker Image') {
+
+
             when {
-                expression { env.BUILD_APP == "true" }
-            }
-            steps {
-                dir('sla-gateway') {
-                    bat """
-                    docker build -t %REGISTRY%/%IMAGE_NAME%:%TAG% .
-                    """
+
+                expression {
+
+                    env.BUILD_APP == "true"
+
                 }
+
             }
+
+
+            steps {
+
+
+                dir('sla-gateway') {
+
+
+                    sh '''
+
+                    docker build \
+                    -t $ECR_REGISTRY/$IMAGE_NAME:$TAG .
+
+                    '''
+
+                }
+
+            }
+
         }
 
-        stage('Push Docker Image') {
+
+
+
+        stage('Push Image to ECR') {
+
+
             when {
-                expression { env.BUILD_APP == "true" }
+
+                expression {
+
+                    env.BUILD_APP == "true"
+
+                }
+
             }
+
+
             steps {
-                bat """
-                docker push %REGISTRY%/%IMAGE_NAME%:%TAG%
-                """
+
+
+                sh '''
+
+                docker push \
+                $ECR_REGISTRY/$IMAGE_NAME:$TAG
+
+                '''
+
             }
+
         }
+
+
+
 
         stage('Deploy Gateway') {
+
+
             when {
-                expression { env.BUILD_APP == "true" }
+
+                expression {
+
+                    env.BUILD_APP == "true"
+
+                }
+
             }
+
+
             steps {
-                bat """
-                kubectl set image deployment/sla-gateway ^
-                sla-gateway=%REGISTRY%/%IMAGE_NAME%:%TAG% ^
+
+
+                sh '''
+
+                kubectl set image deployment/sla-gateway \
+                sla-gateway=$ECR_REGISTRY/$IMAGE_NAME:$TAG \
                 -n sla-demo
 
-                kubectl rollout status deployment/sla-gateway -n sla-demo
-                """
+
+                kubectl rollout status \
+                deployment/sla-gateway \
+                -n sla-demo
+
+                '''
+
             }
+
         }
+
+
+
+
 
         stage('Apply Kubernetes Manifests') {
+
+
             when {
-                expression { env.BUILD_K8S == "true" }
+
+                expression {
+
+                    env.BUILD_K8S == "true"
+
+                }
+
             }
+
+
             steps {
-                bat """
+
+
+                sh '''
+
                 kubectl apply -f k8s
-                """
+
+                '''
+
             }
+
         }
 
+
+
+
+
+        stage('Verify Deployment') {
+
+
+            steps {
+
+
+                sh '''
+
+                echo "Pods:"
+                kubectl get pods -n sla-demo
+
+
+                echo "Services:"
+                kubectl get svc -n sla-demo
+
+                '''
+
+            }
+
+        }
+
+
+
     }
+
+
 
     post {
+
+
         always {
-            bat "docker logout"
+
+            sh '''
+
+            docker logout $ECR_REGISTRY || true
+
+            '''
+
         }
+
 
         success {
-            echo "Pipeline completed successfully!"
+
+            echo "SLA Multi Metric Autoscaling pipeline completed successfully!"
+
         }
 
+
         failure {
-            echo "Pipeline failed."
+
+            echo "Pipeline failed. Check logs."
+
         }
+
     }
+
 }

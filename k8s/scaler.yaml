@@ -1,51 +1,52 @@
 apiVersion: keda.sh/v1alpha1
 kind: ScaledObject
+
 metadata:
-  name: podinfo-scaler
+  name: farm-scaler
   namespace: sla-demo
 
 spec:
   scaleTargetRef:
-    name: podinfo
+    name: farm-app
 
   minReplicaCount: 1
   maxReplicaCount: 40
 
   triggers:
 
-  - type: cpu
-    metricType: Utilization
-    metadata:
-      value: "30"
+    - type: cpu
+      metricType: Utilization
+      metadata:
+        value: "30"
 
-  - type: memory
-    metricType: Utilization
-    metadata:
-      value: "70"
+    - type: memory
+      metricType: Utilization
+      metadata:
+        value: "70"
 
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring:9090
-      metricName: request_rate
-      query: |
-        sum(rate(http_requests_total{service="podinfo"}[1m]))
-      threshold: "300"
+    - type: prometheus
+      metadata:
+        serverAddress: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        metricName: request_rate
+        query: |
+          sum(rate(django_http_requests_total_by_method_total[1m]))
+        threshold: "5"
 
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring:9090
-      metricName: latency
-      query: |
-        histogram_quantile(
-          0.95,
-          sum(rate(http_request_duration_seconds_bucket{service="podinfo"}[1m])) by (le)
-        )
-      threshold: "0.5"
+    - type: prometheus
+      metadata:
+        serverAddress: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        metricName: latency
+        query: |
+          histogram_quantile(
+            0.95,
+            sum(rate(django_http_requests_latency_including_middlewares_seconds_bucket[1m])) by (le)
+          )
+        threshold: "0.5"
 
-  - type: prometheus
-    metadata:
-      serverAddress: http://prometheus-kube-prometheus-prometheus.monitoring:9090
-      metricName: error_rate
-      query: |
-        sum(rate(http_requests_total{service="podinfo",status=~"5.."}[1m]))
-      threshold: "0.1"
+    - type: prometheus
+      metadata:
+        serverAddress: http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090
+        metricName: error_rate
+        query: |
+          sum(rate(django_http_responses_total_by_status_total{status=~"5.."}[1m]))
+        threshold: "1"

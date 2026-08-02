@@ -1,0 +1,22 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+
+metadata:
+  name: farm-service
+  namespace: monitoring
+  labels:
+    release: monitoring
+
+spec:
+  namespaceSelector:
+    matchNames:
+      - sla-demo
+
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: farm-app
+
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 10s

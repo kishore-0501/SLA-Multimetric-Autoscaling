@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: farm-service
+  namespace: sla-demo
+  labels:
+    app.kubernetes.io/name: farm-app
+
+spec:
+  selector:
+    app: farm-app
+
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+
+  type: ClusterIP

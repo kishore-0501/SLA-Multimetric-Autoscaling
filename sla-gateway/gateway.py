@@ -10,17 +10,17 @@ app = FastAPI()
 # Configuration
 # ----------------------------
 
-PODINFO_URL = "http://podinfo.sla-demo.svc.cluster.local:9898"
+FARM_APP_URL = "http://farm-service.sla-demo.svc.cluster.local"
 
 PROMETHEUS_URL = (
-    "http://prometheus-kube-prometheus-prometheus.monitoring:9090"
+    "http://monitoring-kube-prometheus-prometheus.monitoring.svc.cluster.local:9090"
 )
 
 SQS_QUEUE_URL = (
-    "https://sqs.eu-west-1.amazonaws.com/238679625965/sla-fallback-queue"
+    "https://sqs.eu-west-1.amazonaws.com/562460196113/sla-fallback-queue"
 )
 
-REQUEST_RATE_LIMIT = 32
+REQUEST_RATE_LIMIT = 30
 
 sqs = boto3.client(
     "sqs",
@@ -48,7 +48,7 @@ def send_to_sqs(message):
 
 def get_request_rate():
 
-    query = 'sum(rate(http_requests_total{service="podinfo"}[1m]))'
+    query = '''sum(rate(django_http_requests_total_by_method_total{namespace="sla-demo"}[1m]))'''
 
     try:
 
@@ -60,9 +60,12 @@ def get_request_rate():
 
         result = response.json()
 
-        value = float(
-            result["data"]["result"][0]["value"][1]
-        )
+        result = response.json()["data"]["result"]
+
+        if not result:
+            return 0
+
+        return float(result[0]["value"][1])
 
         return value
 
@@ -114,7 +117,7 @@ def gateway():
         start = time.time()
 
         response = requests.get(
-            PODINFO_URL,
+            FARM_APP_URL,
             timeout=2
         )
 
@@ -122,14 +125,15 @@ def gateway():
 
         return {
             "backend": "Kubernetes",
+            "status_code": response.status_code,
             "latency": round(latency, 4),
-            "response": response.json()
-        }
+            "message": "Request successfully served by Farm application"
+}
 
     except Exception:
 
         send_to_sqs({
-            "reason": "Podinfo Unreachable"
+            "reason": "Farm App Unreachable"
         })
 
         return {

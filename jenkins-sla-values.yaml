@@ -1,0 +1,29 @@
+controller:
+  admin:
+    username: admin
+    password: JenkinsAdmin123!
+
+  installPlugins:
+    - kubernetes
+    - workflow-aggregator
+    - git
+    - configuration-as-code
+
+  numExecutors: 0
+
+  resources:
+    requests:
+      cpu: 250m
+      memory: 512Mi
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+
+  serviceType: ClusterIP
+
+
+persistence:
+  enabled: true
+  storageClass: gp3
+  size: 8Gi
+  accessMode: ReadWriteOnce

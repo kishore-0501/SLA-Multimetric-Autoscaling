@@ -1,20 +1,27 @@
 apiVersion: apps/v1
 kind: Deployment
+
 metadata:
   name: sla-gateway
   namespace: sla-demo
+
 spec:
   replicas: 1
+
   selector:
     matchLabels:
       app: sla-gateway
+
   template:
     metadata:
       labels:
         app: sla-gateway
+
     spec:
       containers:
       - name: sla-gateway
-        image: <your-dockerhub-username>/sla-gateway:v1
+
+        image: 562460196113.dkr.ecr.eu-west-1.amazonaws.com/gateway:latest
+
         ports:
         - containerPort: 8000
