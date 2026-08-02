@@ -17,6 +17,15 @@ pipeline {
 
     }
 
+    stage('Check Buildx') {
+    steps {
+        sh '''
+        whoami
+        docker buildx ls
+        '''
+    }
+}
+
 
     stages {
 
@@ -188,7 +197,7 @@ pipeline {
 
         }
 
-
+        
 
 
         stage('Verify Deployment') {
