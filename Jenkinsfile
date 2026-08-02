@@ -25,8 +25,7 @@ pipeline {
 
             steps {
 
-                git branch: 'main',
-                    url: 'https://github.com/kishore-0501/SLA-Multimetric-Autoscaling'
+                checkout scm
 
             }
 
@@ -57,8 +56,8 @@ pipeline {
                     changes.contains("k8s/") ? "true" : "false"
 
 
-                    echo "BUILD_APP = ${env.BUILD_APP}"
-                    echo "BUILD_K8S = ${env.BUILD_K8S}"
+                    echo "BUILD_APP=${env.BUILD_APP}"
+                    echo "BUILD_K8S=${env.BUILD_K8S}"
 
                 }
 
@@ -96,6 +95,7 @@ pipeline {
             }
 
         }
+
 
 
 
@@ -203,7 +203,6 @@ pipeline {
 
 
 
-
         stage('Apply Kubernetes Manifests') {
 
 
@@ -234,7 +233,6 @@ pipeline {
 
 
 
-
         stage('Verify Deployment') {
 
 
@@ -243,11 +241,11 @@ pipeline {
 
                 sh '''
 
-                echo "Pods:"
+                echo "Current Pods:"
                 kubectl get pods -n sla-demo
 
 
-                echo "Services:"
+                echo "Current Services:"
                 kubectl get svc -n sla-demo
 
                 '''
@@ -257,7 +255,6 @@ pipeline {
         }
 
 
-
     }
 
 
@@ -265,20 +262,9 @@ pipeline {
     post {
 
 
-        always {
-
-            sh '''
-
-            docker logout $ECR_REGISTRY || true
-
-            '''
-
-        }
-
-
         success {
 
-            echo "SLA Multi Metric Autoscaling pipeline completed successfully!"
+            echo "SLA Multi-Metric Autoscaling deployment completed successfully."
 
         }
 
