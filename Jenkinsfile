@@ -6,26 +6,64 @@ pipeline {
 
 
     environment {
-
         AWS_REGION = "eu-west-1"
-
         ECR_REGISTRY = "562460196113.dkr.ecr.eu-west-1.amazonaws.com"
-
         IMAGE_NAME = "gateway"
-
         TAG = "${BUILD_NUMBER}"
-
     }
 
-    stage('Check Buildx') {
-    steps {
-        sh '''
-        whoami
-        docker buildx ls
-        '''
+
+    stages {
+
+
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+
+        stage('Check Buildx') {
+            steps {
+                sh '''
+                echo "Current user:"
+                whoami
+
+                echo "Docker Buildx:"
+                docker buildx ls
+                '''
+            }
+        }
+
+
+        stage('Detect Changes') {
+            steps {
+
+                script {
+
+                    def changes = sh(
+                        script: "git diff --name-only HEAD~1 HEAD || true",
+                        returnStdout: true
+                    ).trim()
+
+                    echo "Changed files:"
+                    echo changes
+
+                    env.BUILD_APP =
+                    changes.contains("sla-gateway/") ? "true" : "false"
+
+                    env.BUILD_K8S =
+                    changes.contains("k8s/") ? "true" : "false"
+
+                }
+            }
+        }
+
+
+        // your remaining stages here
+
     }
 }
-
 
     stages {
 
