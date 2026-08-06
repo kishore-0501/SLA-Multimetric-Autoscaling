@@ -1,36 +1,59 @@
 pipeline {
 
     agent {
-        kubernetes {
+    kubernetes {
 
-            yaml '''
+        yaml '''
 apiVersion: v1
 kind: Pod
+
 spec:
 
   containers:
 
+  - name: docker
+    image: docker:27-dind
+
+    securityContext:
+      privileged: true
+
+    command:
+    - dockerd-entrypoint.sh
+
+    args:
+    - "--host=tcp://0.0.0.0:2375"
+    - "--host=unix:///var/run/docker.sock"
+
+
+    volumeMounts:
+    - name: docker-storage
+      mountPath: /var/lib/docker
+
+
   - name: shell
     image: docker:27-cli
+
     command:
     - sleep
+
     args:
     - 999999
 
-    volumeMounts:
-    - name: docker-socket
-      mountPath: /var/run/docker.sock
+
+    env:
+
+    - name: DOCKER_HOST
+      value: tcp://localhost:2375
 
 
   volumes:
 
-  - name: docker-socket
-    hostPath:
-      path: /var/run/docker.sock
-'''
+  - name: docker-storage
+    emptyDir: {}
 
-        }
+'''
     }
+}
 
 
     environment {
