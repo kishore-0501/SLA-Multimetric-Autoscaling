@@ -244,17 +244,20 @@ spec:
 
             steps {
 
-                sh '''
+                container('shell') {
 
-                kubectl set image deployment/sla-gateway \
-                sla-gateway=$ECR_REGISTRY/$IMAGE_NAME:$TAG \
-                -n sla-demo
+                    sh '''
+
+                    kubectl set image deployment/sla-gateway \
+                    sla-gateway=$ECR_REGISTRY/$IMAGE_NAME:$TAG \
+                    -n sla-demo
 
 
-                kubectl rollout status deployment/sla-gateway \
-                -n sla-demo
+                    kubectl rollout status deployment/sla-gateway \
+                    -n sla-demo
 
-                '''
+                    '''
+                }
 
             }
 
@@ -275,11 +278,14 @@ spec:
 
             steps {
 
-                sh '''
+                container('shell') {
 
-                kubectl apply -f k8s
+                    sh '''
 
-                '''
+                    kubectl apply -f k8s
+
+                    '''
+                }    
 
             }
 
@@ -291,22 +297,26 @@ spec:
 
             steps {
 
-                sh '''
+                container('shell') {
 
-                echo "Pods:"
-                kubectl get pods -n sla-demo
+                    sh '''
+
+                    echo "Pods:"
+                    kubectl get pods -n sla-demo
 
 
-                echo "Services:"
-                kubectl get svc -n sla-demo
+                    echo "Services:"
+                    kubectl get svc -n sla-demo
 
-                '''
+                    '''
+
+                }
 
             }
 
         }
 
-    }
+    
 
 
 
