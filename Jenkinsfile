@@ -21,9 +21,6 @@ spec:
     - name: DOCKER_TLS_CERTDIR
       value: ""
 
-    command:
-    - dockerd-entrypoint.sh
-
     args:
     - "--host=tcp://0.0.0.0:2375"
     - "--host=unix:///var/run/docker.sock"
@@ -99,6 +96,9 @@ spec:
                 container('shell') {
 
                     sh '''
+                    echo "Waiting for Docker daemon..."
+
+                    sleep 15
 
                     echo "Docker version"
                     docker version
