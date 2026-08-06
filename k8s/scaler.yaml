@@ -10,7 +10,7 @@ spec:
     name: farm-app
 
   minReplicaCount: 1
-  maxReplicaCount: 42
+  maxReplicaCount: 40
 
   triggers:
 
