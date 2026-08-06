@@ -6,7 +6,7 @@ metadata:
 
 spec:
 
-  schedule: "*/19 * * * *"
+  schedule: "*/59 * * * *"
 
   concurrencyPolicy: Forbid
 
