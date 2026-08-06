@@ -31,7 +31,7 @@ spec:
 
 
   - name: shell
-    image: docker:27-cli
+    image: 562460196113.dkr.ecr.eu-west-1.amazonaws.com/sla-jenkins-agent:latest
 
     command:
     - sleep
