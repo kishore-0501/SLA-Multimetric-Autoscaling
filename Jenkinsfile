@@ -93,21 +93,18 @@ spec:
 
                     sh '''
 
-                    echo "Current user:"
-                    whoami
-
-
-                    echo "Docker version:"
+                    echo "Docker version"
                     docker version
 
 
-                    '''
+                    echo "Docker info"
+                    docker info
 
-                }
+                '''
 
             }
-
         }
+    }
 
 
 
