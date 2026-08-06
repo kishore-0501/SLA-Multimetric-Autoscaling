@@ -1,9 +1,9 @@
 pipeline {
 
     agent {
-    kubernetes {
+        kubernetes {
 
-        yaml '''
+            yaml '''
 apiVersion: v1
 kind: Pod
 
@@ -16,6 +16,10 @@ spec:
 
     securityContext:
       privileged: true
+
+    env:
+    - name: DOCKER_TLS_CERTDIR
+      value: ""
 
     command:
     - dockerd-entrypoint.sh
@@ -30,8 +34,10 @@ spec:
       mountPath: /var/lib/docker
 
 
+
   - name: shell
     image: 562460196113.dkr.ecr.eu-west-1.amazonaws.com/sla-jenkins-agent:latest
+
 
     command:
     - sleep
@@ -46,14 +52,15 @@ spec:
       value: tcp://localhost:2375
 
 
+
   volumes:
 
   - name: docker-storage
     emptyDir: {}
 
 '''
+        }
     }
-}
 
 
     environment {
@@ -100,22 +107,29 @@ spec:
                     echo "Docker info"
                     docker info
 
-                '''
+
+                    echo "AWS version"
+                    aws --version
+
+
+                    echo "Kubectl version"
+                    kubectl version --client
+
+                    '''
+
+                }
 
             }
+
         }
-    }
 
 
 
         stage('Detect Changes') {
 
-
             steps {
 
-
                 script {
-
 
                     def changes = sh(
                         script: "git diff --name-only HEAD~1 HEAD || true",
@@ -123,20 +137,16 @@ spec:
                     ).trim()
 
 
-
                     echo "Changed files:"
                     echo changes
-
 
 
                     env.BUILD_APP =
                     changes.contains("sla-gateway/") ? "true" : "false"
 
 
-
                     env.BUILD_K8S =
                     changes.contains("k8s/") ? "true" : "false"
-
 
 
                     echo "BUILD_APP=${env.BUILD_APP}"
@@ -150,16 +160,12 @@ spec:
 
 
 
-
         stage('Login to ECR') {
-
 
             when {
 
                 expression {
-
                     env.BUILD_APP == "true"
-
                 }
 
             }
@@ -167,9 +173,7 @@ spec:
 
             steps {
 
-
                 container('shell') {
-
 
                     sh '''
 
@@ -178,7 +182,6 @@ spec:
                     docker login \
                     --username AWS \
                     --password-stdin $ECR_REGISTRY
-
 
                     '''
 
@@ -190,24 +193,18 @@ spec:
 
 
 
-
         stage('Build and Push Image') {
-
 
             when {
 
                 expression {
-
                     env.BUILD_APP == "true"
-
                 }
 
             }
 
 
-
             steps {
-
 
                 container('shell') {
 
@@ -222,7 +219,6 @@ spec:
                         -t $ECR_REGISTRY/$IMAGE_NAME:$TAG \
                         --push .
 
-
                         '''
 
                     }
@@ -235,25 +231,18 @@ spec:
 
 
 
-
-
         stage('Deploy Gateway') {
-
 
             when {
 
                 expression {
-
                     env.BUILD_APP == "true"
-
                 }
 
             }
 
 
-
             steps {
-
 
                 sh '''
 
@@ -262,43 +251,33 @@ spec:
                 -n sla-demo
 
 
-
-                kubectl rollout status \
-                deployment/sla-gateway \
+                kubectl rollout status deployment/sla-gateway \
                 -n sla-demo
-
 
                 '''
 
             }
 
         }
-
 
 
 
         stage('Apply Kubernetes Manifests') {
 
-
             when {
 
                 expression {
-
                     env.BUILD_K8S == "true"
-
                 }
 
             }
 
 
-
             steps {
-
 
                 sh '''
 
                 kubectl apply -f k8s
-
 
                 '''
 
@@ -308,12 +287,9 @@ spec:
 
 
 
-
         stage('Verify Deployment') {
 
-
             steps {
-
 
                 sh '''
 
@@ -321,10 +297,8 @@ spec:
                 kubectl get pods -n sla-demo
 
 
-
                 echo "Services:"
                 kubectl get svc -n sla-demo
-
 
                 '''
 
@@ -332,14 +306,11 @@ spec:
 
         }
 
-
     }
 
 
 
-
     post {
-
 
         success {
 
@@ -348,13 +319,11 @@ spec:
         }
 
 
-
         failure {
 
             echo "Pipeline failed. Check Jenkins logs."
 
         }
-
 
     }
 
