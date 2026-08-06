@@ -1,56 +1,7 @@
 pipeline {
 
     agent {
-        kubernetes {
-
-            yaml '''
-apiVersion: v1
-kind: Pod
-
-spec:
-
-  containers:
-
-  - name: docker
-    image: docker:27-dind
-
-    securityContext:
-      privileged: true
-
-    env:
-    - name: DOCKER_TLS_CERTDIR
-      value: ""
-
-    args:
-    - "--host=tcp://0.0.0.0:2375"
-    - "--host=unix:///var/run/docker.sock"
-
-    volumeMounts:
-    - name: docker-storage
-      mountPath: /var/lib/docker
-
-
-  - name: shell
-    image: 562460196113.dkr.ecr.eu-west-1.amazonaws.com/sla-jenkins-agent:latest
-
-    command:
-    - sleep
-
-    args:
-    - 999999
-
-    env:
-    - name: DOCKER_HOST
-      value: tcp://localhost:2375
-
-
-  volumes:
-
-  - name: docker-storage
-    emptyDir: {}
-
-'''
-        }
+        label 'mac-agent'
     }
 
 
@@ -81,47 +32,41 @@ spec:
         }
 
 
-
         stage('Check Environment') {
 
             steps {
 
-                container('shell') {
+                sh '''
 
-                    sh '''
-
-                    echo "Waiting for Docker daemon..."
-
-                    sleep 15
+                echo "Current user:"
+                whoami
 
 
-                    echo "Docker version"
-
-                    docker version
-
-
-                    echo "Docker info"
-
-                    docker info
+                echo "Hostname:"
+                hostname
 
 
-                    echo "AWS version"
+                echo "Docker:"
+                docker --version
 
-                    aws --version
+
+                echo "Docker Buildx:"
+                docker buildx ls
 
 
-                    echo "Kubectl version"
+                echo "AWS:"
+                aws --version
 
-                    kubectl version --client
 
-                    '''
+                echo "Kubectl:"
+                kubectl version --client
 
-                }
+
+                '''
 
             }
 
         }
-
 
 
         stage('Detect Changes') {
@@ -129,6 +74,7 @@ spec:
             steps {
 
                 script {
+
 
                     def changes = sh(
                         script: "git diff --name-only HEAD~1 HEAD || true",
@@ -149,19 +95,21 @@ spec:
 
 
                     echo "BUILD_APP=${env.BUILD_APP}"
+
                     echo "BUILD_K8S=${env.BUILD_K8S}"
+
 
                 }
 
             }
 
         }
-
 
 
 
         stage('Login to ECR') {
 
+
             when {
 
                 expression {
@@ -175,15 +123,51 @@ spec:
 
             steps {
 
-                container('shell') {
+
+                sh '''
+
+                aws ecr get-login-password \
+                --region $AWS_REGION | \
+                docker login \
+                --username AWS \
+                --password-stdin $ECR_REGISTRY
+
+
+                '''
+
+            }
+
+        }
+
+
+
+        stage('Build and Push Docker Image') {
+
+
+            when {
+
+                expression {
+
+                    env.BUILD_APP == "true"
+
+                }
+
+            }
+
+
+            steps {
+
+
+                dir('sla-gateway') {
+
 
                     sh '''
 
-                    aws ecr get-login-password \
-                    --region $AWS_REGION | \
-                    docker login \
-                    --username AWS \
-                    --password-stdin $ECR_REGISTRY
+                    docker buildx build \
+                    --platform linux/amd64 \
+                    -t $ECR_REGISTRY/$IMAGE_NAME:$TAG \
+                    --push .
+
 
                     '''
 
@@ -192,53 +176,12 @@ spec:
             }
 
         }
-
-
-
-
-        stage('Build and Push Image') {
-
-            when {
-
-                expression {
-
-                    env.BUILD_APP == "true"
-
-                }
-
-            }
-
-
-            steps {
-
-                container('shell') {
-
-
-                    dir('sla-gateway') {
-
-
-                        sh '''
-
-                        docker buildx build \
-                        --platform linux/amd64 \
-                        -t $ECR_REGISTRY/$IMAGE_NAME:$TAG \
-                        --push .
-
-                        '''
-
-                    }
-
-                }
-
-            }
-
-        }
-
 
 
 
         stage('Deploy Gateway') {
 
+
             when {
 
                 expression {
@@ -252,22 +195,21 @@ spec:
 
             steps {
 
-                container('shell') {
 
-                    sh '''
+                sh '''
 
-                    kubectl set image deployment/sla-gateway \
-                    sla-gateway=$ECR_REGISTRY/$IMAGE_NAME:$TAG \
-                    -n sla-demo
+                kubectl set image deployment/sla-gateway \
+                sla-gateway=$ECR_REGISTRY/$IMAGE_NAME:$TAG \
+                -n sla-demo
 
 
-                    kubectl rollout status \
-                    deployment/sla-gateway \
-                    -n sla-demo
 
-                    '''
+                kubectl rollout status \
+                deployment/sla-gateway \
+                -n sla-demo
 
-                }
+
+                '''
 
             }
 
@@ -275,8 +217,8 @@ spec:
 
 
 
-
         stage('Apply Kubernetes Manifests') {
+
 
             when {
 
@@ -291,15 +233,13 @@ spec:
 
             steps {
 
-                container('shell') {
 
-                    sh '''
+                sh '''
 
-                    kubectl apply -f k8s
+                kubectl apply -f k8s
 
-                    '''
 
-                }
+                '''
 
             }
 
@@ -307,27 +247,27 @@ spec:
 
 
 
-
         stage('Verify Deployment') {
+
 
             steps {
 
-                container('shell') {
 
-                    sh '''
+                sh '''
 
-                    echo "Pods:"
+                echo "Current Pods:"
 
-                    kubectl get pods -n sla-demo
+                kubectl get pods -n sla-demo
 
 
-                    echo "Services:"
 
-                    kubectl get svc -n sla-demo
+                echo "Current Services:"
 
-                    '''
+                kubectl get svc -n sla-demo
 
-                }
+
+
+                '''
 
             }
 
@@ -343,15 +283,14 @@ spec:
 
         success {
 
-            echo "SLA Multi-Metric Autoscaling CI/CD completed successfully."
+            echo "SLA Multi-Metric Autoscaling deployment completed successfully."
 
         }
 
 
-
         failure {
 
-            echo "Pipeline failed. Check Jenkins logs."
+            echo "Pipeline failed. Check logs."
 
         }
 
