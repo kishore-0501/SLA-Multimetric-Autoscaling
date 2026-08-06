@@ -25,16 +25,13 @@ spec:
     - "--host=tcp://0.0.0.0:2375"
     - "--host=unix:///var/run/docker.sock"
 
-
     volumeMounts:
     - name: docker-storage
       mountPath: /var/lib/docker
 
 
-
   - name: shell
     image: 562460196113.dkr.ecr.eu-west-1.amazonaws.com/sla-jenkins-agent:latest
-
 
     command:
     - sleep
@@ -42,12 +39,9 @@ spec:
     args:
     - 999999
 
-
     env:
-
     - name: DOCKER_HOST
       value: tcp://localhost:2375
-
 
 
   volumes:
@@ -73,7 +67,6 @@ spec:
     }
 
 
-
     stages {
 
 
@@ -96,23 +89,29 @@ spec:
                 container('shell') {
 
                     sh '''
+
                     echo "Waiting for Docker daemon..."
 
                     sleep 15
 
+
                     echo "Docker version"
+
                     docker version
 
 
                     echo "Docker info"
+
                     docker info
 
 
                     echo "AWS version"
+
                     aws --version
 
 
                     echo "Kubectl version"
+
                     kubectl version --client
 
                     '''
@@ -160,12 +159,15 @@ spec:
 
 
 
+
         stage('Login to ECR') {
 
             when {
 
                 expression {
+
                     env.BUILD_APP == "true"
+
                 }
 
             }
@@ -193,12 +195,15 @@ spec:
 
 
 
+
         stage('Build and Push Image') {
 
             when {
 
                 expression {
+
                     env.BUILD_APP == "true"
+
                 }
 
             }
@@ -231,12 +236,15 @@ spec:
 
 
 
+
         stage('Deploy Gateway') {
 
             when {
 
                 expression {
+
                     env.BUILD_APP == "true"
+
                 }
 
             }
@@ -253,10 +261,12 @@ spec:
                     -n sla-demo
 
 
-                    kubectl rollout status deployment/sla-gateway \
+                    kubectl rollout status \
+                    deployment/sla-gateway \
                     -n sla-demo
 
                     '''
+
                 }
 
             }
@@ -265,12 +275,15 @@ spec:
 
 
 
+
         stage('Apply Kubernetes Manifests') {
 
             when {
 
                 expression {
+
                     env.BUILD_K8S == "true"
+
                 }
 
             }
@@ -285,11 +298,13 @@ spec:
                     kubectl apply -f k8s
 
                     '''
-                }    
+
+                }
 
             }
 
         }
+
 
 
 
@@ -302,10 +317,12 @@ spec:
                     sh '''
 
                     echo "Pods:"
+
                     kubectl get pods -n sla-demo
 
 
                     echo "Services:"
+
                     kubectl get svc -n sla-demo
 
                     '''
@@ -316,11 +333,13 @@ spec:
 
         }
 
-    
+
+    }
 
 
 
     post {
+
 
         success {
 
@@ -329,12 +348,15 @@ spec:
         }
 
 
+
         failure {
 
             echo "Pipeline failed. Check Jenkins logs."
 
         }
 
+
     }
+
 
 }
