@@ -1,28 +1,237 @@
-Project Overview
-Architecture
-Components Used
-Installation Steps
-Demo Instructions
-Results
-Future Work
+# SLA-Aware Multi-Metric Autoscaling for Cloud-Native Applications
 
+An SLA-aware Kubernetes autoscaling framework that combines **KEDA**, **Horizontal Pod Autoscaler (HPA)**, **Prometheus**, **Grafana**, and **AWS Serverless Services** to improve application reliability and maintain Service Level Agreement (SLA) compliance under dynamic workloads.
 
+This project was developed as part of the **MSc in Cloud Computing** at the **National College of Ireland (NCI)**.
 
-Users
-  ↓
-Load Balancer
-  ↓
-Podinfo Application
-  ↓
-KEDA + HPA Autoscaling
-  ↓
-Prometheus Metrics
-  ↓
-Grafana Dashboards
+---
 
-Failure Scenario:
-Application Failure
-  ↓
-SQS Queue
-  ↓
-AWS Lambda Processing
+## Project Overview
+
+Traditional Kubernetes Horizontal Pod Autoscaler (HPA) primarily relies on CPU utilization, which is often insufficient for handling real-world workload variations. Applications may experience increased latency, request failures, or reduced responsiveness even when CPU usage remains low.
+
+This project introduces an **SLA-aware multi-metric autoscaling framework** that makes scaling decisions using multiple Service Level Indicators (SLIs), improving responsiveness, resource utilization, and overall application availability.
+
+Additionally, a **serverless fallback mechanism** ensures that incoming requests are not lost when Kubernetes services become unavailable or exceed SLA thresholds.
+
+---
+
+## Features
+
+- Multi-Metric Autoscaling using KEDA
+- Kubernetes Horizontal Pod Autoscaler (HPA)
+- Amazon EKS Deployment
+- FastAPI SLA Gateway
+- FarmEase Cloud-Native Application
+- Prometheus Metrics Collection
+- Grafana Monitoring Dashboard
+- Serverless Fallback using Amazon SQS and AWS Lambda
+- Jenkins CI/CD Pipeline
+- Docker Containerization
+- Load Testing using K6
+- Amazon Elastic Container Registry (ECR)
+
+---
+
+# System Architecture
+
+```
+                    Users
+                      │
+                      ▼
+          AWS Network Load Balancer
+                      │
+                      ▼
+             FastAPI SLA Gateway
+                      │
+        ┌─────────────┴─────────────┐
+        │                           │
+        ▼                           ▼
+   FarmEase Application      Serverless Fallback
+    (Amazon EKS)              Amazon SQS Queue
+        │                           │
+        ▼                           ▼
+   Kubernetes Pods            AWS Lambda Function
+        │
+        ▼
+  KEDA + Horizontal Pod Autoscaler
+        │
+        ▼
+ Prometheus Metrics Collection
+        │
+        ▼
+     Grafana Dashboard
+```
+
+---
+
+# Technology Stack
+
+| Category | Technologies |
+|----------|--------------|
+| Cloud | Amazon Web Services (AWS) |
+| Container Platform | Kubernetes (Amazon EKS) |
+| Autoscaling | KEDA, HPA |
+| Monitoring | Prometheus, Grafana |
+| Application | FarmEase (Django) |
+| API Gateway | FastAPI |
+| Containerization | Docker |
+| CI/CD | Jenkins |
+| Container Registry | Amazon ECR |
+| Load Testing | K6 |
+| Serverless | AWS Lambda, Amazon SQS |
+| Version Control | GitHub |
+
+---
+
+# Repository Structure
+
+```
+.
+├── app/                     # FarmEase Application
+├── gateway/                 # FastAPI SLA Gateway
+├── k8s/                     # Kubernetes manifests
+│   ├── deployment.yaml
+│   ├── service.yaml
+│   ├── hpa.yaml
+│   ├── scaledobject.yaml
+│   ├── cronjob.yaml
+│   └── monitoring/
+├── lambda/                  # Serverless Fallback
+├── k6/                      # Load Testing Scripts
+├── Jenkinsfile
+├── Dockerfile
+└── README.md
+```
+
+---
+
+# Autoscaling Metrics
+
+The proposed framework evaluates multiple Service Level Indicators instead of relying solely on CPU utilization.
+
+### Metrics Used
+
+- CPU Utilization
+- Memory Utilization
+- Request Rate
+- Response Latency
+- Error Rate
+
+These metrics are continuously monitored through Prometheus and evaluated by KEDA to determine the appropriate number of application replicas.
+
+---
+
+# Serverless Fallback
+
+To improve application availability, a serverless fallback mechanism has been integrated.
+
+### Workflow
+
+1. User request reaches the FastAPI Gateway.
+2. Gateway evaluates application health.
+3. If the application responds normally, traffic is forwarded to FarmEase.
+4. If latency exceeds the SLA threshold or the application becomes unavailable:
+   - Request is placed into Amazon SQS.
+   - AWS Lambda processes queued requests.
+5. Kubernetes recovers while client requests continue to be handled.
+
+This approach minimizes request failures during unexpected workload spikes.
+
+---
+
+# Monitoring
+
+Application performance is monitored using:
+
+- Prometheus
+- Grafana
+
+Metrics visualized include:
+
+- CPU Utilization
+- Memory Usage
+- Request Rate
+- Response Latency
+- Error Rate
+- Active Replicas
+- Autoscaling Events
+
+---
+
+# CI/CD Pipeline
+
+The deployment pipeline is fully automated using Jenkins.
+
+```
+GitHub
+   │
+   ▼
+Jenkins Controller
+   │
+   ▼
+Jenkins Agent
+   │
+   ├── Build Docker Image
+   ├── Push Image to Amazon ECR
+   ├── Update Kubernetes Manifests
+   └── Deploy to Amazon EKS
+          │
+          ▼
+ Rolling Update
+```
+
+The pipeline automatically builds, publishes, and deploys updated application versions without manual intervention.
+
+---
+
+# Load Testing
+
+K6 is used to simulate realistic workloads.
+
+The load tests evaluate:
+
+- Normal Traffic
+- Burst Traffic
+- High Concurrency
+- Autoscaling Response
+- SLA Compliance
+
+A Kubernetes CronJob periodically generates traffic to continuously validate autoscaling behaviour.
+
+---
+
+# Key Outcomes
+
+- Improved scaling responsiveness using multiple metrics
+- Better SLA compliance than CPU-only autoscaling
+- Reduced response latency during workload spikes
+- Automated deployment through Jenkins
+- Real-time observability with Prometheus and Grafana
+- Improved resilience using AWS Serverless fallback
+
+---
+
+# Future Improvements
+
+- Predictive Autoscaling using Machine Learning
+- Multi-Region Kubernetes Deployment
+- Multi-Cluster Traffic Distribution
+- Cost-Aware Autoscaling Policies
+- Service Mesh Integration (Istio)
+
+---
+
+# Author
+
+**Kishore Ramesh**
+
+MSc Cloud Computing
+
+National College of Ireland
+
+---
+
+# License
+
+This repository was created for academic research purposes as part of an MSc dissertation at the National College of Ireland.
